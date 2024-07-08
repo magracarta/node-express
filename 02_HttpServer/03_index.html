@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>03_index.html</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <form id = "form">
+        <input type="text" id ="userid">
+        <button type="submit">등록</button>
+    </form>
+    <script type="text/javascript">
+        document.getElementById("form").addEventListener('submit',async (e)=>{
+            e.preventDefault(); // 실행중인 이벤트 동작 멈춤. 현재는 submit 을 멈추라는 뜻
+            if(! e.target.userid.value ){//userid가 비어있다면
+                return alert("아이디를 입력하세요.");20
+            }
+            try{
+                //post방식으로 서버에 요청
+                await axios.post('/user' , {userid: e.target.userid.value});
+            }catch(error){
+
+            }
+            e.target.userid.value='';
+        });
+    </script>
+    
+</body>
+</html>

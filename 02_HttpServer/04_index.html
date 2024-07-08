@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04_index.html</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- 
+        1. axious 라이브러리 : jQuery , ajax와 같은 종류의 javascript 라이브러리입니다.
+        2. HTTP 통신을 하는데 매우 인기있게 사용되는 라이브러리 이며,
+        3. 브라우저와 Node.js 플랫폼에서 모두 사용가능합니다.
+        4. 현재는 브라우져 상에서 사용하기 위해 src 로 로딩하였고,
+        5. 익스프레스 서버에서 사용하려면 설치 명령으로 설치 후 사용합니다.
+        6. JSON 데이터 자동변환 기능이 있고, get, post, put, delete 등을 다양하게 구분하여 request 요청이 가능합니다.
+     -->
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a>&nbsp;&nbsp;&nbsp;
+        <a href="/about">About</a><br><br><br>
+    </nav>
+    <div>
+        <form id ="form">
+            <input type="text" name="username" id ="username">
+            <button type="submit">등록</button>
+        </form>
+    </div>
+    <div id ="list">
+        <!-- 조회에서 스크립트로 넣음 -->
+    </div>
+</body>
+</html>
+<script>
+    document.querySelector("form").addEventListener('submit',async (e)=>{
+        e.preventDefault();
+        const username = e.target.username.value;
+        if(!username) return alert("이름을 입력하세요.");
+
+        try{
+            const result = await axios.post('/user',{username});
+            //alert(result.data);
+        }catch(error){
+            console.error(error);
+        }
+
+        e.target.username.value ="";
+        getUsers();
+    });
+
+
+    getUsers();
+    async function getUsers(){
+        try{
+            const result = await axios.get('/user');
+            console.log(result);
+            const users = result.data;
+            //list를 비웁니다.
+            const list = document.getElementById('list');
+            list.innerHTML = "";
+
+            const keys = Object.keys(users);//객체의 키값을 배열 형태로 추출
+            keys.map((key)=>{
+                const userDiv = document.createElement("div");
+                const span1 = document.createElement("span");
+                span1.textContent = key;
+                const span2 = document.createElement("span");
+                span2.textContent = users[key];
+
+                userDiv.appendChild(span1);
+                userDiv.appendChild(span2);
+                
+                const edit = document.createElement('button');
+                edit.textContent = "수정";
+                const remove = document.createElement('button');
+                remove.textContent = "삭제";
+
+                edit.addEventListener('click', async(e)=>{
+                    const username = prompt('바꿀 이름을 입력하세요.', users[key]);
+                    if(!username){
+                        return alert('이름을 반드시 입력하셔야합니다.');
+                    }
+                    try{
+                        await axios.put('/user',{ key, username});
+                        
+                    }catch(err){
+                        console.log(err);
+                    }
+                    getUsers(); //수정된 내용을 조회후 다시 화면에 표시
+                });
+                remove.addEventListener('click',async (e)=>{
+                    try{
+                        await axios.delete('/user/'+key);
+                    }catch(err){
+                        console.error(err);
+                    }
+                    getUsers();
+                });
+                userDiv.appendChild(edit);
+                userDiv.appendChild(remove);
+
+                list.appendChild(userDiv);
+            });
+        }catch(error){
+            console.error(error);
+        }
+
+    }
+</script>

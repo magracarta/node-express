@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fileupload.html</title>
+</head>
+<body>
+    <form id ="form" method="post" enctype="multipart/form-data">
+        <table border="1">
+            <tr><td>제목</td><td><input type="text" name="title"></td></tr>
+            <tr><td>설명</td><td><input type="text" name="description"></td></tr>
+            <tr><td>가격</td><td><input type="text" name="price"></td></tr>
+            <tr><td>이미지</td><td><input type="file" name="image"></td></tr>
+            <tr><td colspan="2"><input type="submit" value="전송"></td></tr>
+        </table>
+    </form>
+    <table border="1">
+        <tr><td>제목</td><td><div id="title">&nbsp;</div></td></tr>
+        <tr><td>설명</td><td><div id="description">&nbsp;</div></td></tr>
+        <tr><td>가격</td><td><div id="price">&nbsp;</div></td></tr>
+        <tr><td>이미지</td><td><div id="image">&nbsp;</div></td></tr>
+    </table>
+    <!-- 
+        1. 서버가 시작되면 첫페이지로 현재 파일이 화면에 표시되도록 해주세요.
+        2. 위쪽 테이블의 내용을 이요하여 파일을 업로드하고, 다시 돌아와서 아래쪽 표에 입력한 내용을 각 div 에 넣어주세요. img div는 가로크기 400의 이미지를 넣어주세요.
+        3. 위쪽 테이블의 입력란은 모두 비워주세요.
+     -->
+     <script>
+        document.querySelector("form").addEventListener("submit", async(e)=>{
+            e.preventDefault();
+            let formData= new FormData(e.target);
+            let data = await dataPost("/upload",formData);
+            if(data){
+                document.querySelector("#title").innerHTML = data.title;
+                document.querySelector("#description").innerHTML = data.description;
+                document.querySelector("#price").innerHTML = data.price;
+                document.querySelector("#image").innerHTML = `<img src="/${data.image}" />`;
+
+                e.target.reset();
+            }
+
+        });
+
+
+        function dataPost(link, data){
+            return new Promise((resolve, reject)=>{
+                fetch(link,{
+                    method:'POST',
+                    body:data
+                }).then(response =>{
+                    if(!response.ok)  throw new Error('error ' + response.statusText);
+                     resolve(response.json());
+                }).catch(data=>{
+                    reject(data);
+                })
+            });
+        }
+
+
+     </script>
+</body>
+</html>

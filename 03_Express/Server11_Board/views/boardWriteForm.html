@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>boardWriteForm.html</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link href="/board.css" rel="stylesheet">
+</head>
+<body>
+    <div id="main_container">
+        <h2>게시글 등록</h2>
+        <div class="board">
+            <form class="insertBoard" method="post" id="insertForm" name="insertBoard" enctype="multipart/form-data">
+                <div class="field">
+                    <label>작성자</label>
+                    <input type="text" name="userid" id ="userid"  readonly/>
+                </div>
+                <div class="field">
+                    <label>비밀번호</label><input style="flex:2" type="password" name="pwd" id ="pwd" />
+                    <div  style="flex:2; margin-left:20px;">게시물 수정 삭제시 필요합니다.</div>
+                </div>
+                <div class="field">
+                    <label>이메일</label>
+                    <input type="text" name="email" id="email" readonly/>
+                </div>
+                <div class="field">
+                    <label>제목</label><input type="text" id="title" name="title"/>
+                </div>
+                <div class="field">
+                    <label>내용</label><textarea name="content" id="content" rows="10" cols="100"></textarea>
+                </div>
+                <div class="field">
+                    <label>이미지</label>
+                    <input type="file" name="image" value="파일 선택" id="image" />
+                </div>
+        
+                <div class="field">
+                    <label>이미지 미리보기</label>
+                    <div style="flex:4">
+                        <img src=""  id="previewimg" width="150" style="display:none" />
+                        <input type="hidden" name="savefilename" id="savefilename" >
+                        <input type="hidden" name="img" id="img" >
+                        <div id="imagename"></div>
+                        <div id="savename"></div>
+                    </div>
+                </div>
+            
+                <div class="field"><input type="submit" value="작성완료" /></div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+    getLoginUser();
+
+    async function getLoginUser(){
+        try{
+            const result = await axios.get('/members/loginUser');
+            const loginUser = result.data;
+            document.getElementById('userid').value = `${loginUser.userid}`;
+            document.getElementById('email').value = `${loginUser.email}`;
+        }catch(err){ 
+            console.error(err);
+        }
+    }
+
+    document.getElementById("image").addEventListener('change', async(e)=>{
+        const formData = new FormData();
+        formData.append('image', e.target.files[0]);
+        try{
+            const result = await axios.post('/boards/imageup',formData);
+            const res = result.data;
+            document.getElementById("previewimg").src = '/img/'+res.savefilename;
+            document.getElementById("previewimg").style.display = "inline";
+            document.getElementById("savefilename").value = res.savefilename;
+            document.getElementById("img").value = res.image;
+            document.getElementById("imagename").innerHTML =  res.image;
+            document.getElementById("savename").innerHTML = res.savefilename;
+        }catch(err){
+            console.log(err);
+        }
+    });
+
+
+    document.querySelector("#insertForm").addEventListener("submit",async(e)=>{
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("userid",e.target.userid.value);
+        formData.append("email",e.target.email.value);
+        if(writerValidation (formData , "비밀번호는 수정삭제시 필요합니다." , e.target.pwd) == false) return false;
+        if(writerValidation (formData , "제목을 입력하세요." , e.target.title) == false) return false;
+        if(writerValidation (formData , "내용을 입력하세요." , e.target.content)  == false ) return false;
+        formData.append("image",e.target.image.value);
+        formData.append("savefilename",e.target.savefilename.value);
+        
+        try{
+            let data = await axios.post("/boards/writeBoard",formData);
+            console.log(data);
+            if(data.data=="ok"){
+                location.href = "/boards/boardList";
+            }else{
+                alert("게시판 저장 실패");
+            }
+        }catch(err){
+            console.error(err);
+        }
+    });
+
+
+    function writerValidation(formData , text , target){
+        if(!target.value) {
+            alert(text);
+            return false;
+        } else return formData.append( target.name , target.value );
+    }
+
+</script>

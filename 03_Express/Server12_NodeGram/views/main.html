@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>main</title>
+    <link href="/gram.css" rel="stylesheet" >
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div class="container">
+    <form id ="login-form" method="post">
+        <div class="field">
+            <label id="email">이메일</label>
+            <input type="text" id = "email" name="email">
+        </div>
+        <div class="field">
+            <label id="password">비밀번호</label>
+            <input type="password" id = "password" name="password">
+        </div>
+        <div class="btn">
+            <button>로그인</button>
+            <input type="button" value="회원가입" onclick="location.href='/user/joinform'"/>
+            <input type="button" value="카카오톡" onclick="location.href='/user/kakao'"/>
+        </div>
+        <div id ="message"></div>
+        <script>
+            document.querySelector("form").addEventListener('submit',async (e)=>{
+                e.preventDefault();
+                let submitv = true;
+                let formdate =new FormData(e.target);
+                let obj ={};
+                formdate.forEach((v,k)=>{
+                    if(v =="" && submitv){
+                        alert(k+"를(을) 입력하세요.");
+                        submitv = false;
+                    }else obj[k] = v;
+                });    
+                if(!submitv) return false;
+                try{
+                    const result = await axios.post("/user/login",{obj});
+                    const msg = result.data.msg;
+                    if(msg != "ok") document.querySelector("#message").innerHTML =msg;
+                    else location.href="/feed/mainlist";
+                 }catch(err){ console.error(err); }
+
+            });
+        </script>
+    </form>
+    </div>
+</body>
+</html>

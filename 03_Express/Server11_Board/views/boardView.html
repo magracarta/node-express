@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>boardView.html</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link href="/board.css" rel="stylesheet">
+</head>
+<body>
+    <div id="main_container">
+        <h2>게시글 상세 보기</h2>
+        <div class="board">
+            <div class="field">
+                <div class="label">작성자</div><div class="text" id = "writer"></div>
+            </div>
+            <div class="field">
+                <div class="label">이메일</div><div class="text" id = "email"></div>
+            </div>
+            <div class="field">
+                <div class="label">조회수</div><div class="text" id ="readcount"></div>
+            </div>
+            <div class="field">
+                <div class="label">작성일</div><div class="text" id = "writedate"></div>
+            </div>
+            <div class="field">
+                <div class="label">제목</div><div class="text" id ="title"></div>
+            </div>
+            <div class="field" style="margin-bottom : 15px; ">
+                <div class="label" >내용</div>
+                <div class="text" style="font-size:140%;flex:1.5;" id="content"></div>
+                <div class="label" style="flex:0.5;">이미지</div>
+                <div class="text" style="flex:2;" id="image"></div>
+            </div>
+            <div class="login-button">
+                <input type="button" class="btn-login" value="수정" onclick="location.href='/boards/updateBoardForm'" />
+                <input type="button" class="btn-login" value="삭제" />
+                <input type="button" class="btn-login" value="목록" onClick="location.href='/boards/boardlist'"/>
+            </div>
+        </div>
+
+        <div class="reply">
+            <div class="reply_row">
+                <div class="reply_col reply_title">작성자</div>
+                <div class="reply_col reply_title">작성일시</div>
+                <div class="reply_col reply_title" style="text-align:center">댓글</div>
+                <div class="reply_col reply_title">작성/삭제</div>
+            </div>
+            <form action="insertReply" id = "insertReply" name="reply" style="margin-bottom: 0px" method="post">
+                <input type="hidden" name="userid" id ="reply_writer" />
+                <input type="hidden" name="boardnum" id = "boardnum" />
+                <div class="reply_row">
+                    <div class="reply_col" id ="reply_writer2"></div>
+                    <div class="reply_col" id="reply_writedate"></div>
+                    <div class="reply_col"><input type="text" name="content" id ="reply_content" size="75"></div>
+                    <div class="reply_col">
+                        <input type="submit" value="답글 작성" onClick="">
+                    </div>
+                </div>
+            </form>
+            <div id ="reply_list">
+
+            </div>
+          
+        </div>
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+    getBoard();
+    getReply();
+
+    async function getReply(){
+        try{ 
+            let result = await axios.get('/members/loginUser');
+            const loginUser =result.data;
+            console.log(result);
+            
+            var today = new Date();
+            var year = today.getFullYear();
+            var month = ('0' + (today.getMonth() + 1)).slice(-2);
+            var day = ('0' + today.getDate()).slice(-2);
+            var dateString = year + '-' + month  + '-' + day;
+
+            document.querySelector("#reply_writer").value = loginUser.userid;
+            document.querySelector("#reply_writer2").innerHTML = loginUser.userid;
+            document.querySelector("#reply_writedate").innerHTML =dateString;
+
+
+
+            result = await axios.get('/boards/getReplys');
+            const replys = result.data;
+            const replylist = document.querySelector("#reply_list");
+            replylist.innerHTML = "";
+
+            replys.map((reply, idx)=>{
+                let reply_row = document.createElement("div");
+                reply_row.className ="reply_row";
+                
+                let reply_col = document.createElement("div");
+                reply_col.className ="reply_col";
+                reply_col.textContent = reply.userid;
+                reply_row.appendChild(reply_col);
+                
+                reply_col = document.createElement("div");
+                reply_col.className ="reply_col";
+                reply_col.textContent = reply.writedate.substring(0,10);
+                reply_row.appendChild(reply_col);
+
+                reply_col = document.createElement("div");
+                reply_col.className ="reply_col";
+                reply_col.textContent = reply.content;
+                reply_row.appendChild(reply_col);
+
+                reply_col = document.createElement("div");
+                reply_col.className ="reply_col";
+                let remove = document.createElement('button');
+                remove.textContent = '삭제';
+                
+                if(loginUser.userid == reply.userid) reply_col.appendChild(remove);
+                else reply_col.textContent ="";
+                
+                remove.addEventListener('click',async(e)=>{
+                    if(!confirm("진짜 삭제하시겠습니까?")) return false;
+                    try{
+                        await axios.delete("/boards/deletReply/"+reply.replynum);
+                        getReply();
+                    }catch(err){
+                        console.error(err);
+                    }
+                });
+               
+                reply_row.appendChild(reply_col);
+
+                replylist.appendChild(reply_row);
+            });
+            
+        }catch(err){
+            console.error(err);
+        }
+    }
+
+
+    async function getBoard(){
+        // 세션에 저장된 게시물번호로 게시물을 조회하고, 페이지의 id값을 이용해서 내용을 표시하세요.
+
+
+        try{
+            const result = await axios.get("/boards/getBoard");
+            const data = result.data;
+            document.querySelector("#writer").innerHTML = data.userid;
+            document.querySelector("#email").innerHTML = data.email;
+            document.querySelector("#readcount").innerHTML = data.readcount;
+            document.querySelector("#readcount").innerHTML = data.readcount;
+            document.querySelector("#writedate").innerHTML = data.writedate;
+            document.querySelector("#title").innerHTML = data.title;
+            document.querySelector("#content").innerHTML = `<pre>${data.content}</pre>`;
+
+            document.querySelector("#boardnum").value = data.num;
+            if(data.savefilename)document.querySelector("#image").innerHTML = `<img src="/img/${data.savefilename}" width ="200">`;
+        }catch(err){
+            console.error(err);
+        }
+        // let boardnum = location.href.split("/boardView/")[1].split("/")[0];
+        // try{
+        //     let data = await getBoarData("/boards/getboard/"+boardnum);
+        //     document.querySelector("#writer").innerHTML = data.userid;
+        //     document.querySelector("#email").innerHTML = data.email;
+        //     document.querySelector("#readcount").innerHTML = data.readcount;
+        //     document.querySelector("#readcount").innerHTML = data.readcount;
+        //     document.querySelector("#writedate").innerHTML = data.writedate;
+        //     document.querySelector("#title").innerHTML = data.title;
+        //     document.querySelector("#content").innerHTML = `<pre>${data.content}</pre>`;
+        //     if(data.savefilename)document.querySelector("#image").innerHTML = `<img src="/img/${data.savefilename}">`;
+
+        // }catch(err){
+        //     console.error(err);
+        // }
+       
+    }
+
+
+
+    async function getBoarData(link){
+        return await new Promise((resolve, reject)=>{
+            fetch(link,{
+                method:"GET"
+            }).then(response =>{return response.json()}).then(data => resolve(data)).catch(data=> reject(data));
+        });
+    }
+
+
+
+    document.querySelector("#insertReply").addEventListener("submit",async (e)=>{
+        e.preventDefault();
+        let formData = new FormData(e.target);
+        if( e.target.userid.value == "undefined"){
+            alert("로그인 후 이용해주세요.");
+            location.href="/";
+        }
+        if(e.target.content.value == "") return alert("댓글 내용을 입력하세요.");
+        let obj = {};
+        formData.forEach((v,k)=>{
+            obj[k]=v;
+            console.log(k + " : " + v);
+        });
+        
+        try{
+            let result= await axios.post("/boards/insertReply", obj);
+            if(result.data.msg == "ok"){
+                alert("댓글 작성완료");
+                e.target.content.value = "";
+                getReply();
+            }
+        }catch(err){
+            console.log(err);
+        }
+
+
+
+    });
+
+
+
+
+</script>

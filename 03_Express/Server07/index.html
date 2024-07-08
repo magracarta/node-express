@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <title>Document</title>
+</head>
+<body>
+    <form method="post" id ="form">
+        ID : <input type="text" name="userid"><br>
+        PWD : <input type="password" name="pwd"><br>
+        <input type="submit" value="로그인"><br>
+        <div id = "message"></div>
+    </form>
+    <script type="text/javascript">
+        document.querySelector("#form").addEventListener('submit',async (e)=>{
+            e.preventDefault(); 
+            const userid = e.target.userid.value;
+            const pwd = e.target.pwd.value;
+            if(userid == ''){
+                return alert('아이디를 입력하세요.');
+            }else if(pwd == ''){
+                return alert('비밀번호를 입력하세요');
+            }
+            //로그인 동작후 아이디가 없습니다. 또는 패스워드가 틀립니다 등의 메세지를 폼내에 표시합니다.
+
+            try{
+                const result = await axios.post("/login",{userid, pwd});
+                const res = result.data;
+                if(res.msg == 'ok'){ //정상 로그인이 아니라면
+                    location.href="/";
+                }else{
+                    document.getElementById("message").innerHTML = res.msg;
+                }
+            }catch(err){
+                console.error(err);
+            }
+        });
+    </script>
+    
+</body>
+</html>

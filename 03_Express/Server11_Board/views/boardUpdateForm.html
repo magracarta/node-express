@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>boardUpdateForm</title>    
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link href="/board.css" rel="stylesheet">
+</head>
+<body>
+    <div id="main_container">
+        <h2>게시글 등록</h2>
+        <div class="board">
+            <form class="insertBoard" method="post" name="updateBoard" id="updateBoard" enctype="multipart/form-data">
+                <div class="field">
+                    <label>작성자</label>
+                    <input type="text" name="userid" id="userid" readonly />
+                </div>
+                <div class="field">
+                    <label>비밀번호</label><input style="flex:2" type="password" name="pass" id="pass" />
+                    <input style="flex:2" type="hidden" name="oldpass" id="oldpass" />
+                    <div style="flex:2; margin-left:20px;">수정하면 비밀번호를 입력하세요.</div>
+                </div>
+                <div class="field">
+                    <label>이메일</label>
+                    <input type="text" name="email" id="email" readonly />
+                </div>
+                <div class="field">
+                    <label>제목</label><input type="text" name="title" id="title" />
+                </div>
+                <div class="field">
+                    <label>내용</label><textarea name="content" rows="10" cols="100" id="content"></textarea>
+                </div>
+
+                <div class="field oldimageWrap" style="display: none;">
+                    <label>기존 이미지 미리보기</label>
+                    <div style="flex:4">
+                        <img src="" id="oldimage" width="150"   />
+                        <input type="hidden" name="oldsavefilename" id="oldsavefilename">
+                        <input type="hidden" name="oldimg" id="oldimg">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>이미지</label>
+                    <input type="file" name="image" id="image" />
+                </div>
+                <div class="field">
+                    <label>이미지 미리보기</label>
+                    <div style="flex:4">
+                        <img src="" id="previewimg" width="150" style="display: none;" />
+                        <input type="hidden" name="savefilename" id="savefilename">
+                        <input type="hidden" name="img" id="img">
+                        <div id="imagename"></div>
+                        <div id="savename"></div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <input type="submit" value="수정완료" />
+                    <input type="button" value="뒤로" onclick="location.href='/boards/boardViewWithoutCnt'" />
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
+<script>
+     getBoard();
+
+     async function getBoard(){
+        
+        try{
+            const result = await axios.get("/boards/getBoard");
+            const data = result.data;
+            document.querySelector("#userid").value = data.userid;
+            document.querySelector("#oldpass").value = data.pass;
+            document.querySelector("#email").value = data.email;
+            document.querySelector("#title").value = data.title;
+            document.querySelector("#content").value = data.content;
+            if(data.savefilename){
+                document.querySelector("#oldimage").src = '/img/'+ data.savefilename;
+                document.querySelector("#oldsavefilename").value =data.savefilename;
+                document.querySelector("#img").value =data.image;
+                document.querySelector("#savefilename").value =data.savefilename;
+                document.querySelector("#oldimg").value =data.image;
+                document.querySelector("#oldimg").value =data.oldimg;
+                document.querySelector(".oldimageWrap").style.display="flex";
+            }
+        }catch(err){
+            console.error(err);
+        }
+     }
+
+    document.getElementById("image").addEventListener('change', async(e)=>{
+        const formData = new FormData();
+        formData.append('image', e.target.files[0]);
+        try{
+            const result = await axios.post('/boards/imageup',formData);
+            const res = result.data;
+            document.getElementById("previewimg").src = '/img/'+res.savefilename;
+            document.getElementById("previewimg").style.display = "inline";
+            document.getElementById("savefilename").value = res.savefilename;
+            document.getElementById("img").value = res.image;
+            document.getElementById("imagename").innerHTML =  res.image;
+            document.getElementById("savename").innerHTML = res.savefilename;
+        }catch(err){
+            console.log(err);
+        }
+    });
+
+
+
+    document.querySelector("form").addEventListener("submit",async(e)=>{
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("userid",e.target.userid.value);
+        if(writerValidation (formData , "비밀번호를 작성해주세요." , e.target.pass) == false) return false;
+        formData.append("email",e.target.email.value);
+        if(e.target.pass.value != e.target.oldpass.value ) return alert("비밀번호가 다릅니다. 다시 확인해주세요.");
+        if(writerValidation (formData , "제목을 입력하세요." , e.target.title) == false) return false;
+        if(writerValidation (formData , "내용을 입력하세요." , e.target.content)  == false ) return false;
+        formData.append("image",e.target.img.value);
+        formData.append("savefilename",e.target.savefilename.value);
+        
+        let obj = {}
+        formData.forEach((v,k)=>{ obj[k] = v; });
+
+        try{
+            let data = await axios.post("/boards/updateBoard",formData);
+            if(data.data=="ok"){
+                location.href = "/boards/boardViewWithoutCnt";
+            }else{
+                alert("게시판 수정 실패");
+            }
+        }catch(err){
+            console.error(err);
+        }
+    });
+
+
+    function writerValidation(formData , text , target){
+        if(!target.value) {
+            alert(text);
+            return false;
+        } else return formData.append( target.name , target.value );
+    }
+</script>
